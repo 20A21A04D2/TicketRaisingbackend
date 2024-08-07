@@ -14,11 +14,18 @@ const ticketSchema = new mongoose.Schema({
     enum: ['Low', 'Medium', 'High'],
     required: true,
   },
-  email: { type: String, required: false },
+  projectName: {
+    type: String,
+    required: true,
+  },
+  email: { 
+    type: String, 
+    required: false 
+  },
   status: {
     type: String,
-    enum: ['pending', 'completed','assigned','Completed','Incompleted'],
-    default: 'pending', 
+    enum: ['pending', 'completed', 'assigned', 'Completed', 'Incompleted'],
+    default: 'pending',
   },
   developerMail: { 
     type: String,
@@ -28,6 +35,10 @@ const ticketSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User', 
     default: null
+  },
+  solution: { 
+    type: String,
+    default: ''
   }
 }, { timestamps: true });
 

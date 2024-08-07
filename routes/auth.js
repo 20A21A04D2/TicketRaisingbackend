@@ -2,7 +2,6 @@ const express = require('express');
 const router = express.Router();
 const User = require('../models/User');
 const Ticket=require('../models/Ticket')
-const jwt = require('jsonwebtoken');
 router.post('/signup', async (req, res) => {
   const { username, email, type, password } = req.body;
   try {
@@ -40,17 +39,21 @@ router.post('/signin', async (req, res) => {
 
 
 router.post('/addticket', async (req, res) => {
-  const { ticketName, ticketDescription, ticketType, email } = req.body;
+  const { ticketName, ticketDescription, ticketType, projectName, email } = req.body;
+  if (!email) {
+    return res.status(400).json({ error: 'Email is required' });
+  }
 
   try {
     const newTicket = new Ticket({
       ticketName,
       ticketDescription,
       ticketType,
+      projectName,
       email,
-      status: 'pending', 
+      status: 'pending',
     });
-
+    console.log(newTicket)
     await newTicket.save();
     res.status(201).json(newTicket);
   } catch (error) {
@@ -235,16 +238,17 @@ router.get('/getticket', async (req, res) => {
 
 
 router.put('/completeticket', async (req, res) => {
-  const { ticketId, status } = req.body;
+  const { ticketId, status, solution } = req.body;
   console.log('Received ticketId:', ticketId);
   console.log('Received status:', status);
+  console.log('Received solution:', solution);
 
   try {
-    const updatedTicket = await Ticket.findByIdAndUpdate(ticketId, { status }, { new: true });
+    const updatedTicket = await Ticket.findByIdAndUpdate(ticketId, { status, solution }, { new: true });
     console.log('Updated ticket:', updatedTicket);
 
     if (updatedTicket) {
-      res.json({ status: updatedTicket.status });
+      res.json({ status: updatedTicket.status, solution: updatedTicket.solution });
     } else {
       res.status(404).json({ error: 'Ticket not found' });
     }
@@ -254,6 +258,52 @@ router.put('/completeticket', async (req, res) => {
   }
 });
 
+router.delete('/users/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const deletedUser = await User.findByIdAndDelete(id);
 
+    if (!deletedUser) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    res.status(200).json({ message: 'User deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting user:', error);
+    res.status(500).json({ message: 'Failed to delete user' });
+  }
+});
+router.get('/pending-tickets', async (req, res) => {
+  try {
+    const pendingTickets = await Ticket.find({ status: 'pending' });
+    res.json(pendingTickets);
+  } catch (error) {
+    res.status(500).json({ message: 'Error fetching pending tickets' });
+  }
+});
+router.get('/completedtickets', async (req, res) => {
+  try {
+    const completeTickets = await Ticket.find({ status: 'Completed' });
+    res.json(completeTickets);
+  } catch (error) {
+    res.status(500).json({ message: 'Error fetching completed tickets' });
+  }
+});
+router.get('/inctickets', async (req, res) => {
+  try {
+    const incTickets = await Ticket.find({ status: 'Incompleted' });
+    res.json(incTickets);
+  } catch (error) {
+    res.status(500).json({ message: 'Error fetching completed tickets' });
+  }
+});
+router.get('/assigntickets', async (req, res) => {
+  try {
+    const incTickets = await Ticket.find({ status: 'assigned' });
+    res.json(incTickets);
+  } catch (error) {
+    res.status(500).json({ message: 'Error fetching completed tickets' });
+  }
+});
 
 module.exports = router;
